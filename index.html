@@ -112,6 +112,14 @@ html, body {
   white-space: nowrap; margin-left: 12px;
   transition: opacity .3s;
 }
+.wiz-dev-label {
+  font-size: 11px; color: var(--muted);
+  white-space: nowrap; letter-spacing: .2px;
+}
+.wiz-dev-label strong { color: var(--accent); }
+/* Mobile-only elements — hidden on desktop */
+.wiz-step-badge { display: none; }
+.wiz-prog-wrap  { display: none; }
 
 /* ── Wizard Main ───────────────────────────────────────────── */
 .wiz-main {
@@ -928,33 +936,167 @@ html, body {
 /* ══════════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════════ */
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
 @media (max-width: 700px) {
+
+  /* ── Header ────────────────────────────────────────────────── */
+  .wiz-header {
+    height: auto;
+    padding: 0 16px;
+    flex-wrap: wrap;
+    gap: 0;
+    row-gap: 0;
+    align-items: center;
+  }
+  .wiz-logo {
+    height: 52px;
+    font-size: 15px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  /* Hide desktop-only header elements */
+  .wiz-progress, .wiz-step-label, .wiz-dev-label { display: none !important; }
+
+  /* Mobile step badge (e.g. "3 / 8") — appears on right side */
+  .wiz-step-badge {
+    display: flex;
+    align-items: center;
+    height: 52px;
+    margin-left: auto;
+    font-size: 12px; font-weight: 700;
+    color: var(--muted); letter-spacing: .3px;
+    transition: opacity .3s;
+  }
+  .wiz-header.on-welcome .wiz-step-badge { opacity: 0; pointer-events: none; }
+
+  /* Progress bar — full-width strip at bottom of header */
+  .wiz-prog-wrap {
+    display: block;
+    flex-basis: 100%;
+    height: 3px;
+    background: var(--border);
+  }
+  .wiz-header.on-welcome .wiz-prog-fill { width: 0% !important; }
+  .wiz-prog-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, #4a8ed4 100%);
+    transition: width .4s cubic-bezier(.25,.8,.25,1);
+    width: 0%;
+  }
+
+  /* ── Main area — edge-to-edge cards ──────────────────────── */
+  .wiz-main { padding: 0 0 80px; align-items: stretch; }
+
+  .step-card {
+    border-radius: 0 !important;
+    box-shadow: none;
+    max-width: 100%;
+    min-height: calc(100svh - 55px - 64px);
+  }
+
+  /* ── Step card header ─────────────────────────────────────── */
+  .sc-head { padding: 22px 20px 20px; }
+  .sc-step-num { font-size: 10px; margin-bottom: 4px; }
+  .sc-title { font-size: 20px; }
+  .sc-sub { font-size: 12px; }
+  .sc-icon { font-size: 36px; right: 18px; top: 18px; }
+
+  /* ── Step card body ───────────────────────────────────────── */
+  .sc-body { padding: 20px 18px 28px; gap: 16px; }
+
+  /* ── Form grids ───────────────────────────────────────────── */
   .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
-  .sc-body { padding: 20px 18px 24px; }
-  .sc-head, .welcome-head { padding: 26px 20px 24px; }
-  .sc-title { font-size: 22px; }
-  .welcome-title { font-size: 28px; letter-spacing: -1px; }
-  .hiw-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .photo-tips-grid { grid-template-columns: 1fr; }
-  .wiz-progress { display: none; }
-  /* Toolbar mobile */
+
+  /* Inputs — font-size 16px prevents iOS auto-zoom */
+  .form-input, .form-select, .form-textarea { font-size: 16px; padding: 14px 16px; }
+  .form-input.big-name { font-size: 18px; padding: 15px 16px; }
+  .form-textarea { min-height: 110px; }
+
+  /* Input zone */
+  .input-zone { padding: 18px 16px 16px; gap: 14px; }
+
+  /* Dynamic items — always show remove buttons (no hover on mobile) */
+  .dyn-item-remove, .chip-remove, .lang-remove { opacity: 1 !important; }
+
+  /* Tips */
+  .photo-tips-grid, .photo-tips-cols { grid-template-columns: 1fr; }
+
+  /* ── Welcome screen ───────────────────────────────────────── */
+  .step-card[data-step="1"] { max-width: 100%; }
+  .welcome-hero { padding: 28px 20px 24px; border-radius: 0; }
+  .welcome-title { font-size: 30px; letter-spacing: -1.5px; }
+  .welcome-subtitle { font-size: 14px; margin-bottom: 24px; }
+  .welcome-features { padding: 24px 20px 32px; border-radius: 0; }
+  .hiw-grid { grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px; }
+  .welcome-cta-btn { width: 100%; justify-content: center; font-size: 16px; padding: 17px 24px; }
+
+  /* ── Footer navigation ────────────────────────────────────── */
+  .wiz-footer {
+    padding: 10px 16px;
+    gap: 10px;
+    height: 64px;
+  }
+  .wiz-back-btn {
+    padding: 12px 14px;
+    background: #f4f6fa;
+    border-color: var(--border);
+    font-size: 13px;
+    min-width: 52px;
+    justify-content: center;
+    border-radius: 12px;
+  }
+  .wiz-counter {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    flex: none;
+    min-width: 40px;
+  }
+  .wiz-next-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 14px 18px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+  .wiz-next-btn.final-btn { font-size: 15px; padding: 14px 18px; }
+
+  /* ── CV page toolbar ──────────────────────────────────────── */
   .toolbar { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px; }
   .toolbar-logo { font-size: 13px; width: 100%; }
   .swatches span { display: none; }
   .tbtn-print { display: none !important; }
-  .tbtn-wa { display: flex !important; }
   .page-wrap { padding: 10px 0 40px; overflow-x: auto; }
-  /* Scale CV to fit mobile screen */
   .cv-mobile-scale {
     transform: scale(var(--cv-scale, 1));
     transform-origin: top center;
     margin-bottom: calc((297mm * var(--cv-scale, 1)) - 297mm);
   }
-  .welcome-hero { padding: 32px 22px 28px; border-radius: 18px 18px 0 0; }
-  .welcome-title { font-size: 28px; letter-spacing: -1px; }
-  .welcome-features { padding: 24px 18px 28px; border-radius: 0 0 18px 18px; }
-  .hiw-grid { grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px; }
-  .step-card[data-step="1"] { border-radius: 0 !important; max-width: 100%; }
+
+  /* ── Export modal — bottom sheet ─────────────────────────── */
+  .export-overlay { align-items: flex-end; padding: 0; }
+  .export-modal {
+    border-radius: 24px 24px 0 0;
+    max-width: 100%;
+    max-height: 90svh;
+    overflow-y: auto;
+    animation: slideUpSheet .3s cubic-bezier(.25,.8,.25,1);
+  }
+  .export-modal-head { padding: 20px 22px 16px; }
+  .export-modal-head::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: rgba(255,255,255,.3);
+    border-radius: 2px;
+    margin: 0 auto 14px;
+  }
+  .export-options { padding: 16px 18px 36px; gap: 10px; }
+  .export-opt { padding: 14px 16px; }
+  .export-opt-icon { width: 40px; height: 40px; font-size: 20px; border-radius: 10px; }
 }
 </style>
 </head>
@@ -972,7 +1114,9 @@ html, body {
     </div>
     <div class="wiz-progress" id="wiz-progress"></div>
     <div class="wiz-step-label" id="wiz-label"></div>
-    <div style="font-size:11px;color:var(--muted);white-space:nowrap;letter-spacing:.2px">Desarrollado por <strong style="color:var(--accent)">JA</strong></div>
+    <span class="wiz-step-badge" id="wiz-step-badge"></span>
+    <div class="wiz-dev-label">Desarrollado por <strong>JA</strong></div>
+    <div class="wiz-prog-wrap"><div class="wiz-prog-fill" id="wiz-prog-fill"></div></div>
   </header>
 
   <main class="wiz-main">
@@ -1558,10 +1702,16 @@ function updateProgress() {
     }
   }
 
-  const dataPos = cur - 1; // position within data steps (0 on welcome)
+  const dataPos = cur - 1;
   const label = cur === 1 ? '' : `Paso ${dataPos} de ${DATA_STEPS}`;
   document.getElementById('wiz-label').textContent = label;
-  document.getElementById('wiz-counter').textContent = cur === 1 ? '' : `Paso ${dataPos} de ${DATA_STEPS}`;
+  document.getElementById('wiz-counter').textContent = cur === 1 ? '' : `${dataPos} / ${DATA_STEPS}`;
+
+  // Mobile progress bar & step badge
+  const fill = document.getElementById('wiz-prog-fill');
+  if (fill) fill.style.width = cur <= 1 ? '0%' : Math.round(dataPos / DATA_STEPS * 100) + '%';
+  const badge = document.getElementById('wiz-step-badge');
+  if (badge) badge.textContent = cur > 1 ? `${dataPos} / ${DATA_STEPS}` : '';
   document.getElementById('btn-back').disabled = cur === 1;
 
   const nb = document.getElementById('btn-next');
