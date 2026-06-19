@@ -427,19 +427,49 @@ html, body {
 .photo-upload-zone input[type=file] { display: none; }
 
 .photo-preview-circle {
-  width: 120px; height: 120px; border-radius: 50%;
+  width: 140px; height: 140px; border-radius: 50%;
   border: 3px solid #d0dcf0;
   overflow: hidden; background: #e8edf8;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; transition: border-color .2s, box-shadow .2s;
+  flex-shrink: 0; transition: border-color .25s, box-shadow .25s;
   box-shadow: 0 4px 20px rgba(26,54,93,.10);
+  position: relative;
 }
 .photo-upload-zone:hover .photo-preview-circle {
   border-color: var(--accent);
   box-shadow: 0 6px 28px rgba(26,54,93,.18);
 }
-.photo-preview-circle img { width: 100%; height: 100%; object-fit: cover; display: none; }
-.photo-placeholder-icon { font-size: 40px; opacity: .28; }
+.photo-preview-circle img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center 15%;
+  display: none;
+}
+.photo-placeholder-icon { font-size: 44px; opacity: .25; }
+
+/* Estado: foto cargada */
+.photo-upload-zone.has-photo {
+  border-color: #6ee7b7;
+  background: linear-gradient(160deg, #f0fff8 0%, #f8fffb 100%);
+}
+.photo-upload-zone.has-photo .photo-preview-circle {
+  border-color: #10b981;
+  box-shadow: 0 0 0 5px rgba(16,185,129,.12), 0 6px 24px rgba(26,54,93,.12);
+}
+.photo-upload-zone.has-photo:hover .photo-preview-circle {
+  border-color: #059669;
+  box-shadow: 0 0 0 6px rgba(16,185,129,.18), 0 8px 28px rgba(26,54,93,.16);
+}
+/* Overlay "Cambiar" al hacer hover cuando ya hay foto */
+.photo-change-overlay {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: rgba(26,54,93,.55);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; opacity: 0; transition: opacity .2s;
+  color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .3px;
+  pointer-events: none;
+}
+.photo-change-overlay svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; }
+.photo-upload-zone.has-photo:hover .photo-change-overlay { opacity: 1; }
 
 .photo-upload-cta {
   text-align: center;
@@ -803,7 +833,7 @@ html, body {
   width: 210mm; min-height: 297mm; background: #fff;
   display: flex; flex-direction: column;
   box-shadow: 0 10px 50px rgba(0,0,0,.16);
-  position: relative; overflow: hidden;
+  position: relative;
 }
 .cv-header {
   background: var(--accent);
@@ -826,16 +856,25 @@ html, body {
   color: #fff; padding: 7mm 6mm 8mm;
   display: flex; flex-direction: column; gap: 5mm; flex-shrink: 0;
 }
-.cv-photo-circle {
-  width: 26mm; height: 26mm; border-radius: 50%;
-  border: 2.5px solid rgba(255,255,255,.38);
-  overflow: hidden; background: rgba(255,255,255,.1);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; margin: 0 auto;
+.cv-photo-wrap {
+  position: relative; margin: 0 auto; width: fit-content;
 }
-.cv-photo-circle img { width: 100%; height: 100%; object-fit: cover; }
-.cv-photo-placeholder { display: flex; flex-direction: column; align-items: center; gap: 3px; opacity: .35; font-size: 9px; text-align: center; }
-.cv-photo-placeholder svg { width: 22px; height: 22px; fill: #fff; }
+.cv-photo-circle {
+  width: 30mm; height: 30mm; border-radius: 50%;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.22), 0 6px 20px rgba(0,0,0,.35);
+  overflow: hidden;
+  background: rgba(255,255,255,.08) center 15% / cover no-repeat;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.cv-photo-circle img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; }
+.cv-photo-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  opacity: .35; font-size: 9px; text-align: center;
+}
+.cv-photo-placeholder svg { width: 26px; height: 26px; fill: #fff; }
 .cv-name { text-align: center; margin-top: 2mm; }
 .cv-name-main { font-size: 14px; font-weight: 700; line-height: 1.3; }
 .cv-name-role  { font-size: 8.5px; opacity: .7; margin-top: 1.5mm; text-transform: uppercase; letter-spacing: .9px; }
@@ -860,7 +899,7 @@ html, body {
 .lang-it-bar   { height: 2.5px; background: rgba(255,255,255,.18); border-radius: 2px; margin-top: 1mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .lang-it-fill  { height: 100%; border-radius: 2px; background: rgba(255,255,255,.72); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-.cv-main { flex: 1; padding: 7mm 8mm 8mm; display: flex; flex-direction: column; gap: 5.5mm; overflow: hidden; }
+.cv-main { flex: 1; padding: 7mm 8mm 8mm; display: flex; flex-direction: column; gap: 5.5mm; }
 .main-sec { display: flex; flex-direction: column; gap: 2.5mm; }
 .main-title { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 2mm; padding-bottom: 2mm; border-bottom: 1.5px solid var(--accent); }
 .summary-text { font-size: 10.5px; line-height: 1.7; color: #4a5568; }
@@ -890,7 +929,7 @@ html, body {
   #cv-page { display: block !important; }
   .toolbar, .tbtn { display: none !important; }
   .page-wrap { padding: 0 !important; margin: 0 !important; display: block; }
-  .cv { width: 210mm !important; height: 297mm !important; min-height: 0 !important; box-shadow: none !important; overflow: hidden; page-break-after: avoid; page-break-inside: avoid; }
+  .cv { width: 210mm !important; min-height: 297mm !important; box-shadow: none !important; page-break-inside: avoid; }
   .cv-header  { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: var(--accent) !important; }
   .cv-sidebar { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: var(--accent) !important; }
   .exp-it::before, .edu-badge, .lang-it-bar, .lang-it-fill, .skill-it::before { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -1232,6 +1271,10 @@ html, body {
           <div class="photo-preview-circle" id="wiz-photo-circle">
             <img id="wiz-photo-img" src="" alt="">
             <div class="photo-placeholder-icon" id="wiz-photo-icon">🧑</div>
+            <div class="photo-change-overlay" id="wiz-photo-overlay">
+              <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Cambiar
+            </div>
           </div>
           <div class="photo-upload-cta">
             <span class="photo-upload-label" id="wiz-photo-text">Subir foto de perfil</span>
@@ -1592,10 +1635,12 @@ html, body {
     </div>
     <div class="cv-body">
       <div class="cv-sidebar">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3mm">
-          <div class="cv-photo-circle" id="cv-photo-circle">
-            <div class="cv-photo-placeholder" id="cv-photo-ph">
-              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3.5mm">
+          <div class="cv-photo-wrap">
+            <div class="cv-photo-circle" id="cv-photo-circle">
+              <div class="cv-photo-placeholder" id="cv-photo-ph">
+                <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
             </div>
           </div>
           <div class="cv-name">
@@ -1824,9 +1869,16 @@ function wizLoadPhoto(e) {
   r.onload = ev => {
     cvData.foto = ev.target.result;
     const img = document.getElementById('wiz-photo-img');
-    img.src = ev.target.result; img.style.display = 'block';
+    img.src = ev.target.result;
+    img.style.display = 'block';
     document.getElementById('wiz-photo-icon').style.display = 'none';
-    document.getElementById('wiz-photo-text').textContent = '✓ Foto cargada — clic para cambiarla';
+    document.getElementById('wiz-photo-text').textContent = '✓ Foto cargada';
+    document.getElementById('wiz-photo-label').classList.add('has-photo');
+    // Ocultar hint y botón cuando hay foto
+    const hint = document.querySelector('.photo-upload-hint');
+    const btn  = document.querySelector('.photo-upload-btn');
+    if (hint) hint.style.display = 'none';
+    if (btn)  btn.style.display  = 'none';
   };
   r.readAsDataURL(f);
 }
@@ -1968,16 +2020,17 @@ function renderCV() {
   setText('cv-name', fullName);
   setText('cv-role', cvData.puesto);
 
-  // Photo
+  // Photo — background-image for correct html2canvas capture
   const circle = document.getElementById('cv-photo-circle');
   const ph = document.getElementById('cv-photo-ph');
-  circle.querySelectorAll('img').forEach(i => i.remove());
   if (cvData.foto) {
-    const img = document.createElement('img');
-    img.src = cvData.foto;
-    circle.appendChild(img);
+    circle.style.backgroundImage    = `url(${cvData.foto})`;
+    circle.style.backgroundSize     = 'cover';
+    circle.style.backgroundPosition = 'center 15%';
     if (ph) ph.style.display = 'none';
   } else {
+    circle.style.backgroundImage = '';
+    circle.style.backgroundPosition = '';
     if (ph) ph.style.display = '';
   }
 
@@ -2132,25 +2185,63 @@ function formatWaInput(el) {
   el.value = el.value.replace(/[^\d\s\-+]/g, '');
 }
 
-/* Genera PDF y devuelve {blob, fileName} */
+/* Genera PDF y devuelve {pdf, fileName} — soporta múltiples páginas A4 */
 async function generarPDF() {
   const overlay = document.getElementById('pdf-loading');
   const txt = document.getElementById('pdf-loading-text');
   txt.textContent = 'Generando tu CV…';
   overlay.classList.add('show');
+
   const cv = document.getElementById('cv');
   const prevTransform = cv.style.transform;
   cv.style.transform = 'none';
-  await new Promise(r => setTimeout(r, 80));
+  await new Promise(r => setTimeout(r, 100));
+
+  // Captura la altura real del contenido
+  const fullWidth  = cv.scrollWidth;
+  const fullHeight = cv.scrollHeight;
+
   const canvas = await html2canvas(cv, {
     scale: 2, useCORS: true, allowTaint: true,
     backgroundColor: '#ffffff',
-    width: cv.offsetWidth, height: cv.offsetHeight
+    width: fullWidth, height: fullHeight,
+    windowWidth: fullWidth, windowHeight: fullHeight
   });
   cv.style.transform = prevTransform;
+
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+
+  const pageW = 210; // mm
+  const pageH = 297; // mm
+  const canvasW = canvas.width;
+  const canvasH = canvas.height;
+  // mm per canvas pixel
+  const ratio = pageW / canvasW;
+  const totalHeightMm = canvasH * ratio;
+
+  if (totalHeightMm <= pageH + 1) {
+    // Una sola página — escala para llenar el A4
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, Math.min(totalHeightMm, pageH));
+  } else {
+    // Múltiples páginas — corta en slices de 297mm
+    const sliceH = Math.round(pageH / ratio); // píxeles por página
+    let yPx = 0;
+    let page = 0;
+    while (yPx < canvasH) {
+      if (page > 0) pdf.addPage();
+      const thisSliceH = Math.min(sliceH, canvasH - yPx);
+      const slice = document.createElement('canvas');
+      slice.width  = canvasW;
+      slice.height = thisSliceH;
+      slice.getContext('2d').drawImage(canvas, 0, yPx, canvasW, thisSliceH, 0, 0, canvasW, thisSliceH);
+      const sliceMmH = thisSliceH * ratio;
+      pdf.addImage(slice.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, sliceMmH);
+      yPx += thisSliceH;
+      page++;
+    }
+  }
+
   const nombre = [cvData.nombre, cvData.apellido].filter(Boolean).join('_') || 'curriculum';
   overlay.classList.remove('show');
   return { pdf, fileName: `CV_${nombre}.pdf` };
