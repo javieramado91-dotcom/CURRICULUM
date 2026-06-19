@@ -1103,16 +1103,37 @@ html, body {
   }
   .wiz-next-btn.final-btn { font-size: 15px; padding: 14px 18px; }
 
-  /* ── CV page toolbar ──────────────────────────────────────── */
-  .toolbar { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px; }
-  .toolbar-logo { font-size: 13px; width: 100%; }
+  /* ── CV page toolbar — fila única, compacta ──────────────── */
+  .toolbar {
+    flex-wrap: nowrap;
+    height: 52px;
+    padding: 0 12px;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .toolbar-logo { display: none; }
+  .tbtn-edit { padding: 7px 12px; font-size: 13px; flex-shrink: 0; }
+  .swatches { gap: 5px; flex-shrink: 0; }
   .swatches span { display: none; }
+  .swatch { width: 20px; height: 20px; }
   .tbtn-print { display: none !important; }
-  .page-wrap { padding: 10px 0 40px; overflow-x: auto; }
+  .tbtn-export { padding: 8px 13px; font-size: 13px; gap: 5px; flex-shrink: 0; margin-left: auto; }
+  .tbtn-export svg { width: 13px; height: 13px; }
+
+  /* ── CV page wrap ─────────────────────────────────────────── */
+  .page-wrap {
+    padding: 12px 0 40px;
+    margin-top: 52px;        /* empuja bajo la toolbar fija */
+    overflow: hidden;        /* sin scroll horizontal */
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  /* ── CV escala: origin top-left para no cortar nada ──────── */
   .cv-mobile-scale {
     transform: scale(var(--cv-scale, 1));
-    transform-origin: top center;
-    margin-bottom: calc((297mm * var(--cv-scale, 1)) - 297mm);
+    transform-origin: top left;
+    /* margin-bottom se calcula por JS según alto real del CV */
   }
 
   /* ── Export modal — bottom sheet ─────────────────────────── */
@@ -2010,7 +2031,8 @@ function showCV() {
   document.getElementById('wizard-page').style.display = 'none';
   document.getElementById('cv-page').style.display = 'block';
   window.scrollTo(0, 0);
-  applyMobileScale();
+  // Esperar un frame para que el DOM renderice el contenido antes de medir
+  requestAnimationFrame(() => applyMobileScale());
 }
 
 /* ── Render CV ───────────────────────────────────────────────── */
@@ -2303,11 +2325,18 @@ async function exportMail() {
 
 /* ── Mobile CV scale ─────────────────────────────────────────── */
 function applyMobileScale() {
+  const cv = document.getElementById('cv');
+  if (!cv) return;
   if (window.innerWidth < 700) {
-    const scale = (window.innerWidth - 16) / (210 * 3.7795);
-    document.documentElement.style.setProperty('--cv-scale', Math.min(scale, 1));
+    const scale = Math.min(window.innerWidth / (210 * 3.7795275591), 1);
+    document.documentElement.style.setProperty('--cv-scale', scale.toFixed(4));
+    // Ajustar margin-bottom según altura real del CV escalado
+    const naturalH = cv.scrollHeight;          // px sin escala
+    const scaledH  = naturalH * scale;         // px visual tras escala
+    cv.style.marginBottom = (scaledH - naturalH) + 'px';  // negativo → colapsa espacio
   } else {
     document.documentElement.style.setProperty('--cv-scale', '1');
+    cv.style.marginBottom = '';
   }
 }
 window.addEventListener('resize', applyMobileScale);
