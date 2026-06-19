@@ -2271,20 +2271,46 @@ async function generarPDF() {
 
   const cv = document.getElementById('cv');
   const prevTransform = cv.style.transform;
-  cv.style.transform = 'none';
-  await new Promise(r => setTimeout(r, 100));
+  const prevMargin = cv.style.marginBottom;
+  const prevWidth = cv.style.width;
 
-  // Captura la altura real del contenido
-  const fullWidth  = cv.scrollWidth;
+  // Fijamos el ancho real de una hoja A4 (210mm = 794px @96dpi) para que la
+  // captura no dependa del viewport del móvil (que es más angosto y deformaría
+  // la relación de aspecto). Así el cálculo de páginas es siempre correcto.
+  const A4_W_PX = Math.round(210 / 25.4 * 96); // 794
+  cv.style.transform = 'none';
+  cv.style.marginBottom = '0';
+  cv.style.width = A4_W_PX + 'px';
+  await new Promise(r => setTimeout(r, 120));
+
+  // Altura real del contenido con el ancho A4 fijado
+  const fullWidth  = A4_W_PX;
   const fullHeight = cv.scrollHeight;
 
-  const canvas = await html2canvas(cv, {
-    scale: 2, useCORS: true, allowTaint: true,
-    backgroundColor: '#ffffff',
-    width: fullWidth, height: fullHeight,
-    windowWidth: fullWidth, windowHeight: fullHeight
-  });
-  cv.style.transform = prevTransform;
+  // Escala adaptativa: evita superar el límite de píxeles de canvas en móviles
+  const MAX_PX = 11000000; // ~11 MP, seguro para móviles de gama baja
+  let scale = 2;
+  if (fullWidth * fullHeight * scale * scale > MAX_PX) {
+    scale = Math.max(1, Math.sqrt(MAX_PX / (fullWidth * fullHeight)));
+  }
+
+  let canvas;
+  try {
+    canvas = await html2canvas(cv, {
+      scale: scale, useCORS: true, allowTaint: false,
+      backgroundColor: '#ffffff', logging: false,
+      width: fullWidth, height: fullHeight,
+      windowWidth: 1024, windowHeight: Math.max(fullHeight, 800)
+    });
+  } finally {
+    cv.style.transform = prevTransform;
+    cv.style.marginBottom = prevMargin;
+    cv.style.width = prevWidth;
+  }
+  if (!canvas || !canvas.width || !canvas.height) {
+    overlay.classList.remove('show');
+    throw new Error('html2canvas devolvió un lienzo vacío');
+  }
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -2297,17 +2323,22 @@ async function generarPDF() {
   const ratio = pageW / canvasW;
   const totalHeightMm = canvasH * ratio;
 
-  if (totalHeightMm <= pageH + 1) {
-    // Una sola página — escala para llenar el A4
+  // Tolerancia: si el contenido sobrepasa la página por unos pocos mm,
+  // lo encajamos en una sola hoja en lugar de crear una segunda casi vacía.
+  if (totalHeightMm <= pageH + 8) {
+    // Una sola página
     pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, Math.min(totalHeightMm, pageH));
   } else {
     // Múltiples páginas — corta en slices de 297mm
-    const sliceH = Math.round(pageH / ratio); // píxeles por página
+    const sliceH = Math.floor(pageH / ratio); // píxeles por página
     let yPx = 0;
     let page = 0;
     while (yPx < canvasH) {
+      const remainingPx = canvasH - yPx;
+      // Si lo que queda es una franja insignificante (<5mm), no creamos otra página
+      if (page > 0 && remainingPx * ratio < 5) break;
       if (page > 0) pdf.addPage();
-      const thisSliceH = Math.min(sliceH, canvasH - yPx);
+      const thisSliceH = Math.min(sliceH, remainingPx);
       const slice = document.createElement('canvas');
       slice.width  = canvasW;
       slice.height = thisSliceH;
@@ -2329,28 +2360,47 @@ async function exportDescargar() {
     const { pdf, fileName } = await generarPDF();
     pdf.save(fileName);
     cerrarExport();
-  } catch(e) { alert('Error al generar el PDF. Intentá de nuevo.'); console.error(e); }
+  } catch(e) { alert('No se pudo generar el PDF. Intentá de nuevo.'); console.error(e); }
 }
 
 async function _enviarWA(numero) {
+  // 1) Generar el PDF (su propio manejo de error)
+  let pdf, fileName;
   try {
-    const { pdf, fileName } = await generarPDF();
-    // Intentar Web Share API con archivo
-    if (navigator.share && navigator.canShare) {
-      const blob = pdf.output('blob');
-      const file = new File([blob], fileName, { type: 'application/pdf' });
-      if (navigator.canShare({ files: [file] })) {
-        cerrarExport();
-        await navigator.share({ files: [file], title: `CV — ${cvData.nombre} ${cvData.apellido}`, text: 'Te comparto mi Curriculum Vitae 📄' });
-        return;
-      }
+    ({ pdf, fileName } = await generarPDF());
+  } catch(e) {
+    console.error('Error generando PDF:', e);
+    alert('No se pudo generar el PDF. Probá nuevamente o usá la opción "Descargar".');
+    return;
+  }
+
+  const nombre = `${cvData.nombre || ''} ${cvData.apellido || ''}`.trim();
+  const msg = encodeURIComponent(`Hola! Te envío mi Curriculum Vitae 📄${nombre ? '\n' + nombre : ''}`);
+
+  // 2) Intentar compartir el archivo directamente (móvil con Web Share)
+  try {
+    const blob = pdf.output('blob');
+    const file = new File([blob], fileName, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      cerrarExport();
+      await navigator.share({
+        files: [file],
+        title: `CV — ${nombre}`,
+        text: 'Te comparto mi Curriculum Vitae 📄'
+      });
+      return; // compartido con éxito
     }
-    // Fallback: descarga + abre WhatsApp
-    pdf.save(fileName);
-    const msg = encodeURIComponent(`Hola! Te envío mi Curriculum Vitae 📄\n${cvData.nombre} ${cvData.apellido}`);
-    cerrarExport();
-    setTimeout(() => window.open(`https://wa.me/${numero}?text=${msg}`, '_blank'), 600);
-  } catch(e) { alert('Error al generar el PDF.'); console.error(e); }
+  } catch(e) {
+    // Si el usuario canceló a propósito, no hacemos nada más
+    if (e && e.name === 'AbortError') { cerrarExport(); return; }
+    // Cualquier otro error (gesto expirado, no soportado): seguimos al fallback
+    console.warn('Web Share no disponible, usando descarga + WhatsApp:', e);
+  }
+
+  // 3) Fallback: descargar el PDF y abrir el chat de WhatsApp
+  try { pdf.save(fileName); } catch(e) { console.error('Error al descargar:', e); }
+  cerrarExport();
+  setTimeout(() => window.open(`https://wa.me/${numero}?text=${msg}`, '_blank'), 600);
 }
 
 function exportWaMuni() { _enviarWA(WA_MUNI); }
@@ -2367,15 +2417,20 @@ function exportWaPersonal() {
 
 async function exportMail() {
   const addr = document.getElementById('export-mail-addr').value.trim();
+  let pdf, fileName;
   try {
-    const { pdf, fileName } = await generarPDF();
-    pdf.save(fileName);
-    const nombre = `${cvData.nombre} ${cvData.apellido}`.trim();
-    const subj = encodeURIComponent(`Curriculum Vitae — ${nombre}`);
-    const body = encodeURIComponent(`Hola,\n\nAdjunto mi Curriculum Vitae en PDF.\n\nSaludos,\n${nombre}`);
-    cerrarExport();
-    setTimeout(() => window.open(`mailto:${addr}?subject=${subj}&body=${body}`, '_blank'), 600);
-  } catch(e) { alert('Error al generar el PDF.'); console.error(e); }
+    ({ pdf, fileName } = await generarPDF());
+  } catch(e) {
+    console.error('Error generando PDF:', e);
+    alert('No se pudo generar el PDF. Intentá de nuevo.');
+    return;
+  }
+  try { pdf.save(fileName); } catch(e) { console.error('Error al descargar:', e); }
+  const nombre = `${cvData.nombre || ''} ${cvData.apellido || ''}`.trim();
+  const subj = encodeURIComponent(`Curriculum Vitae — ${nombre}`);
+  const body = encodeURIComponent(`Hola,\n\nAdjunto mi Curriculum Vitae en PDF.\n\nSaludos,\n${nombre}`);
+  cerrarExport();
+  setTimeout(() => window.open(`mailto:${addr}?subject=${subj}&body=${body}`, '_blank'), 600);
 }
 
 /* ── Mobile CV scale ─────────────────────────────────────────── */
