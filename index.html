@@ -1008,6 +1008,72 @@ html, body {
 .pdf-loading-text { font-size: 15px; font-weight: 600; opacity: .9; }
 .pdf-loading-sub  { font-size: 12px; opacity: .55; }
 
+/* Estado de éxito / Confirmación de redirección */
+.pdf-success-card {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 420px;
+  width: 90%;
+  padding: 30px 24px;
+  background: #ffffff;
+  color: var(--text) !important;
+  border-radius: 22px;
+  box-shadow: 0 20px 50px rgba(10,20,40,.35);
+  text-align: center;
+  animation: slideUp .3s cubic-bezier(.25,.8,.25,1);
+}
+.pdf-success-icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: #e6fcf5;
+  color: #099268;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+  margin-bottom: 2px;
+}
+.pdf-success-title {
+  font-size: 20px; font-weight: 800; color: var(--accent);
+  letter-spacing: -.3px; line-height: 1.2;
+}
+.pdf-success-desc {
+  font-size: 13.5px; color: #4a5568; line-height: 1.6;
+}
+.pdf-success-desc strong {
+  color: var(--text);
+  font-weight: 700;
+}
+.pdf-success-btn {
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, transform .1s;
+}
+.pdf-success-btn.wa {
+  background: #25D366;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(37,211,102,.3);
+}
+.pdf-success-btn.wa:hover {
+  background: #1da851;
+}
+.pdf-success-btn.mail {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(26,54,93,.25);
+}
+.pdf-success-btn.mail:hover {
+  background: var(--accent-mid);
+}
+
 /* ══════════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════════ */
@@ -1695,11 +1761,23 @@ html, body {
     </div>
   </div>
 
-  <!-- Loading overlay -->
+  <!-- Loading overlay / Redirection helper -->
   <div class="pdf-loading" id="pdf-loading">
-    <div class="pdf-spinner"></div>
-    <div class="pdf-loading-text" id="pdf-loading-text">Generando tu CV…</div>
-    <div class="pdf-loading-sub">Esto puede tardar unos segundos</div>
+    <!-- Estado 1: Generando PDF -->
+    <div id="pdf-loading-state" style="display: flex; flex-direction: column; align-items: center; gap: 18px;">
+      <div class="pdf-spinner"></div>
+      <div class="pdf-loading-text" id="pdf-loading-text">Generando tu CV…</div>
+      <div class="pdf-loading-sub">Esto puede tardar unos segundos</div>
+    </div>
+    
+    <!-- Estado 2: Éxito y Acción -->
+    <div class="pdf-success-card" id="pdf-success-state">
+      <div class="pdf-success-icon">✓</div>
+      <div class="pdf-success-title" id="pdf-success-title">¡CV Guardado!</div>
+      <p class="pdf-success-desc" id="pdf-success-desc"></p>
+      <button id="pdf-action-btn" class="pdf-success-btn"></button>
+      <button class="photo-skip-btn" style="color: var(--muted); font-size: 12px; margin-top: 5px;" onclick="cerrarSuccessOverlay()">Cerrar</button>
+    </div>
   </div>
 
   <div class="page-wrap">
@@ -2363,8 +2441,81 @@ async function exportDescargar() {
   } catch(e) { alert('No se pudo generar el PDF. Intentá de nuevo.'); console.error(e); }
 }
 
+// Detección de dispositivo móvil
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Normalizador inteligente de números para WhatsApp
+function normalizeWhatsAppNumber(raw) {
+  let clean = raw.replace(/\D/g, '');
+  if (!clean) return '';
+  
+  if (clean.startsWith('0')) {
+    clean = clean.slice(1);
+  }
+  
+  if (clean.length === 10) {
+    return '549' + clean;
+  }
+  
+  if (clean.startsWith('54') && clean.length === 12) {
+    return '549' + clean.slice(2);
+  }
+  
+  return clean.startsWith('549') ? clean : '549' + clean;
+}
+
+// Mostrar overlay de confirmación e intentar redirección automática
+function showSuccessOverlay(type, target, fileName, actionFn) {
+  // Asegurar que el contenedor principal overlay se muestre
+  const overlay = document.getElementById('pdf-loading');
+  overlay.classList.add('show');
+
+  document.getElementById('pdf-loading-state').style.display = 'none';
+  const card = document.getElementById('pdf-success-state');
+  const title = document.getElementById('pdf-success-title');
+  const desc = document.getElementById('pdf-success-desc');
+  const btn = document.getElementById('pdf-action-btn');
+  
+  card.style.display = 'flex';
+  
+  if (type === 'wa') {
+    title.textContent = 'Abriendo WhatsApp...';
+    desc.innerHTML = `Se descargó <strong>${fileName}</strong> en tu dispositivo.<br><br>Si la aplicación no se abre automáticamente, presioná abajo para iniciar el chat. <strong>Recordá adjuntar el archivo PDF descargado</strong> en la conversación.`;
+    btn.className = 'pdf-success-btn wa';
+    btn.innerHTML = `<svg width="16" height="16" fill="#fff" viewBox="0 0 24 24" style="margin-right:6px; vertical-align: middle;"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.5-5.739-1.453L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.451 5.403.002 9.794-4.382 9.797-9.786.002-2.618-1.01-5.08-2.857-6.93C16.326 2.04 13.868.995 11.996.995 6.596.995 2.203 5.381 2.2 10.786c-.001 1.536.415 3.037 1.206 4.389l-.995 3.633 3.73-.978-.094-.058z"/></svg> Abrir WhatsApp`;
+  } else if (type === 'mail') {
+    title.textContent = 'Abriendo Correo...';
+    desc.innerHTML = `Se descargó <strong>${fileName}</strong> en tu dispositivo.<br><br>Si tu aplicación de correo no se abre automáticamente, presioná abajo para iniciar el mensaje. <strong>Recordá adjuntar el archivo PDF descargado</strong> en el correo.`;
+    btn.className = 'pdf-success-btn mail';
+    btn.innerHTML = `📧 Abrir Correo`;
+  }
+  
+  btn.onclick = () => {
+    actionFn();
+    cerrarSuccessOverlay();
+  };
+
+  // Intentar la redirección automáticamente
+  try {
+    actionFn();
+  } catch (err) {
+    console.warn("La redirección automática falló, se requiere interacción manual:", err);
+  }
+}
+
+// Cerrar overlay de éxito
+function cerrarSuccessOverlay() {
+  document.getElementById('pdf-loading').classList.remove('show');
+  // Restaurar estado de carga inicial para la próxima vez
+  setTimeout(() => {
+    document.getElementById('pdf-loading-state').style.display = 'flex';
+    document.getElementById('pdf-success-state').style.display = 'none';
+  }, 300);
+}
+
 async function _enviarWA(numero) {
-  // 1) Generar el PDF (su propio manejo de error)
   let pdf, fileName;
   try {
     ({ pdf, fileName } = await generarPDF());
@@ -2374,44 +2525,32 @@ async function _enviarWA(numero) {
     return;
   }
 
-  const nombre = `${cvData.nombre || ''} ${cvData.apellido || ''}`.trim();
-  const msg = encodeURIComponent(`Hola! Te envío mi Curriculum Vitae 📄${nombre ? '\n' + nombre : ''}`);
-
-  // 2) Intentar compartir el archivo directamente (móvil con Web Share)
-  try {
-    const blob = pdf.output('blob');
-    const file = new File([blob], fileName, { type: 'application/pdf' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      cerrarExport();
-      await navigator.share({
-        files: [file],
-        title: `CV — ${nombre}`,
-        text: 'Te comparto mi Curriculum Vitae 📄'
-      });
-      return; // compartido con éxito
-    }
-  } catch(e) {
-    // Si el usuario canceló a propósito, no hacemos nada más
-    if (e && e.name === 'AbortError') { cerrarExport(); return; }
-    // Cualquier otro error (gesto expirado, no soportado): seguimos al fallback
-    console.warn('Web Share no disponible, usando descarga + WhatsApp:', e);
-  }
-
-  // 3) Fallback: descargar el PDF y abrir el chat de WhatsApp
+  // Descarga del PDF automática en segundo plano
   try { pdf.save(fileName); } catch(e) { console.error('Error al descargar:', e); }
+  
   cerrarExport();
-  setTimeout(() => window.open(`https://wa.me/${numero}?text=${msg}`, '_blank'), 600);
+  
+  const nombre = `${cvData.nombre || ''} ${cvData.apellido || ''}`.trim();
+  const msg = `Hola! Te envío mi Curriculum Vitae 📄${nombre ? '\n' + nombre : ''}`;
+  
+  // Mostrar la pantalla de éxito con el botón directo para WhatsApp
+  showSuccessOverlay('wa', numero, fileName, () => {
+    const url = `phone=${numero}&text=${encodeURIComponent(msg)}`;
+    if (isMobileDevice()) {
+      window.location.href = `whatsapp://send?${url}`;
+    } else {
+      window.open(`https://web.whatsapp.com/send?${url}`, '_blank');
+    }
+  });
 }
 
 function exportWaMuni() { _enviarWA(WA_MUNI); }
 
 function exportWaPersonal() {
-  const raw = document.getElementById('export-wa-num').value.replace(/[\s\-]/g,'');
-  if (!raw) { document.getElementById('export-wa-num').focus(); return; }
-  // Normalizar número argentino
-  let num = raw.replace(/^\+/,'');
-  if (num.startsWith('0')) num = '54' + num.slice(1);
-  if (!num.startsWith('54')) num = '549' + num;
+  const raw = document.getElementById('export-wa-num').value;
+  if (!raw.trim()) { document.getElementById('export-wa-num').focus(); return; }
+  const num = normalizeWhatsAppNumber(raw);
+  if (!num) { alert('Por favor, ingresá un número de teléfono válido.'); return; }
   _enviarWA(num);
 }
 
@@ -2425,12 +2564,20 @@ async function exportMail() {
     alert('No se pudo generar el PDF. Intentá de nuevo.');
     return;
   }
+  
+  // Descarga del PDF automática en segundo plano
   try { pdf.save(fileName); } catch(e) { console.error('Error al descargar:', e); }
-  const nombre = `${cvData.nombre || ''} ${cvData.apellido || ''}`.trim();
-  const subj = encodeURIComponent(`Curriculum Vitae — ${nombre}`);
-  const body = encodeURIComponent(`Hola,\n\nAdjunto mi Curriculum Vitae en PDF.\n\nSaludos,\n${nombre}`);
+  
   cerrarExport();
-  setTimeout(() => window.open(`mailto:${addr}?subject=${subj}&body=${body}`, '_blank'), 600);
+  
+  const nombre = `${cvData.nombre || ''} ${cvData.apellido || ''}`.trim();
+  const subj = `Curriculum Vitae — ${nombre}`;
+  const body = `Hola,\n\nAdjunto mi Curriculum Vitae en PDF.\n\nSaludos,\n${nombre}`;
+  
+  // Mostrar la pantalla de éxito con el botón directo para Email
+  showSuccessOverlay('mail', addr, fileName, () => {
+    window.location.href = `mailto:${addr}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  });
 }
 
 /* ── Mobile CV scale ─────────────────────────────────────────── */
