@@ -224,13 +224,6 @@ a.btn { text-decoration: none; }
 .sm-item.done .st-num { background: var(--brand-50); border-color: var(--brand-100); color: var(--brand); }
 .sm-item.active { background: var(--brand-50); color: var(--brand-700); }
 .sm-item.active .st-num { background: var(--brand); border-color: var(--brand); color: #fff; }
-.return-bar {
-  display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 18px; padding: 11px 14px;
-  border: 1px solid var(--brand-100); border-radius: 12px; background: var(--brand-50); color: var(--brand-700);
-  font-size: 14px; font-weight: 700; text-align: left; transition: background .15s;
-}
-.return-bar:hover { background: var(--brand-100); }
-#btn-back.is-return { color: var(--brand-700); background: var(--brand-50); }
 .mprog { display: none; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--line); }
 .mprog-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand), #5B7BFF); transition: width .35s var(--ease); }
 
@@ -479,7 +472,6 @@ button.exp-opt:hover { border-color: var(--line-strong); background: var(--surfa
 .pv-badge { font-size: 12px; font-weight: 600; color: var(--muted); padding: 3px 9px; border-radius: 99px; background: rgba(15, 23, 42, .06); }
 .pv-badge.busy { color: var(--brand); background: var(--brand-50); }
 .pv-badge.warn { color: var(--warn); background: var(--warn-50); }
-.pv-design { margin-left: auto; }
 .pv-close { display: none; }
 .pv-scroll { flex: 1; min-height: 0; overflow: auto; padding: 26px 26px 50px; }
 .pv-pages { display: flex; flex-direction: column; align-items: center; gap: 22px; }
@@ -550,7 +542,6 @@ button.exp-opt:hover { border-color: var(--line-strong); background: var(--surfa
   }
   .preview-pane.open { transform: none; visibility: visible; }
   .pv-close { display: inline-flex; margin-left: auto; }
-  .pv-design { display: none; }
   .pv-head { padding-top: max(10px, env(safe-area-inset-top)); background: #fff; }
   .pv-scroll { padding: 16px 12px 110px; }
   .pv-mobile-actions {

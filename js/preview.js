@@ -111,9 +111,10 @@ CV.Preview = (() => {
     const d = CV.state.design;
     if (n > 1) {
       const tips = [];
-      if (d.size !== 'compacto') tips.push('<button data-quick="size">usar letra compacta</button>');
-      if (d.template !== 'compacto') tips.push('<button data-quick="tpl">probar el diseño Compacto</button>');
-      warn.innerHTML = `<svg class="i"><use href="#i-info"/></svg><span>Tu CV ocupa <strong>${n} hojas</strong>. Está bien si tenés mucha experiencia; si preferís que entre en una sola, podés ${tips.join(' o ') || 'resumir algunas tareas'}.</span>`;
+      if (d.size !== 'compacto') tips.push('la letra <strong>Compacta</strong>');
+      if (d.template !== 'compacto') tips.push('el diseño <strong>Compacto</strong>');
+      const how = tips.length ? `en el último paso podés elegir ${tips.join(' o ')}` : 'podés resumir algunas tareas';
+      warn.innerHTML = `<svg class="i"><use href="#i-info"/></svg><span>Tu CV ocupa <strong>${n} hojas</strong>. Está bien si tenés mucha experiencia; si preferís que entre en una sola, ${how}.</span>`;
       warn.hidden = false;
     } else {
       warn.hidden = true;

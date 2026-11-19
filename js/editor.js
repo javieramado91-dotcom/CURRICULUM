@@ -45,15 +45,7 @@ CV.Editor = (() => {
     });
     $('mprog-fill').style.width = ((cur + 1) / steps.length * 100) + '%';
     $('step-count').textContent = `${cur + 1} / ${steps.length}`;
-    const ret = returnTo != null ? steps[returnTo] : null;
-    $('btn-back').disabled = cur === 0 && !ret;
-    $('btn-back').innerHTML = ret
-      ? `${icon('arrow-left')}<span>Volver a ${esc(ret.title)}</span>`
-      : `${icon('arrow-left')}<span>Anterior</span>`;
-    $('btn-back').classList.toggle('is-return', !!ret);
-    const bar = $('return-bar');
-    bar.hidden = !ret;
-    if (ret) bar.querySelector('span').textContent = `Volver a ${ret.title} (paso ${returnTo + 1})`;
+    $('btn-back').disabled = cur === 0;
     const next = $('btn-next');
     const last = cur === steps.length - 1;
     next.innerHTML = last
@@ -63,30 +55,9 @@ CV.Editor = (() => {
     $('editor').classList.toggle('on-design', s.id === 'diseno');
   }
 
-  /* Paso desde el que se saltó con un atajo (ej. "Cambiar diseño"), para poder volver directo */
-  let returnTo = null;
-
-  /** Salta a un paso desde un atajo recordando dónde estaba la persona */
-  function jumpTo(id) {
-    const i = steps.findIndex(s => s.id === id);
-    if (i < 0) return;
-    if (i === cur) return;
-    const origin = returnTo != null ? returnTo : cur;
-    goTo(i);
-    if (Math.abs(i - origin) > 1) { returnTo = origin; updateStepUI(); }
-  }
-
-  function goBackToOrigin() {
-    if (returnTo == null) return;
-    const r = returnTo;
-    returnTo = null;
-    goTo(r);
-  }
-
   function goTo(i, opts = {}) {
     if (typeof i === 'string') i = steps.findIndex(s => s.id === i);
     if (i < 0 || i >= steps.length) return;
-    returnTo = null;
     closeStepMenu();
     const back = i < cur;
     steps.forEach((s, k) => { s.el.classList.toggle('active', k === i); s.el.classList.toggle('back', back && k === i); });
@@ -124,10 +95,7 @@ CV.Editor = (() => {
     if (cur === steps.length - 1) { CV.Export.download(); return; }
     goTo(cur + 1);
   }
-  function back() {
-    if (returnTo != null) { goBackToOrigin(); return; }
-    if (cur > 0) goTo(cur - 1);
-  }
+  function back() { if (cur > 0) goTo(cur - 1); }
 
   /* ── Menú de pasos (celular y tablet, donde no se ve la barra de pasos) ── */
   function buildStepMenu() {
@@ -147,7 +115,6 @@ CV.Editor = (() => {
     });
     document.addEventListener('click', e => { if (!e.target.closest('#step-menu')) closeStepMenu(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeStepMenu(); });
-    $('return-bar').addEventListener('click', goBackToOrigin);
   }
   function closeStepMenu() {
     const menu = $('step-menu');
@@ -724,5 +691,5 @@ CV.Editor = (() => {
     goTo(0, { noFocus: true });
   }
 
-  return { init, goTo, jumpTo, next, back, renderAll, syncSegs, refreshDesign, currentStep: () => steps[cur] && steps[cur].id };
+  return { init, goTo, next, back, renderAll, syncSegs, refreshDesign, currentStep: () => steps[cur] && steps[cur].id };
 })();

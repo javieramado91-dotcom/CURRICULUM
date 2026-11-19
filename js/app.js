@@ -50,7 +50,7 @@ window.CV = window.CV || {};
 
   CV.App = { openEditor, openLanding, openPreview, closePreview };
 
-  /* ── Acciones con data-action / data-goto ────────────────── */
+  /* ── Acciones con data-action ─────────────────────────────── */
   const ACTIONS = {
     'start': () => { openEditor(); CV.Editor.goTo('datos'); },
     'home': () => openLanding(),
@@ -73,29 +73,12 @@ window.CV = window.CV || {};
   document.addEventListener('click', e => {
     const a = e.target.closest('[data-action]');
     if (a && ACTIONS[a.dataset.action]) { e.preventDefault(); ACTIONS[a.dataset.action](a); return; }
-    const g = e.target.closest('[data-goto]');
-    if (g) {
-      e.preventDefault();
-      openEditor();
-      closePreview();
-      CV.Editor.jumpTo(g.dataset.goto);
-      return;
-    }
-    const q = e.target.closest('[data-quick]');
-    if (q) {
-      if (q.dataset.quick === 'size') CV.state.design.size = 'compacto';
-      if (q.dataset.quick === 'tpl') { CV.state.design.template = 'compacto'; CV._designOnlyBumps = (CV._designOnlyBumps || 0) + 1; }
-      CV.Editor.syncSegs();
-      CV.changed();
-      CV.Editor.refreshDesign();
-      return;
-    }
     const tc = e.target.closest('[data-start-tpl]');
     if (tc) {
       CV.state.design.template = tc.dataset.startTpl;
       openEditor();
       CV.Editor.goTo('datos');
-      CV.toast(`Elegiste el diseño ${CV.TEMPLATES[tc.dataset.startTpl].name}. Lo podés cambiar cuando quieras.`);
+      CV.toast(`Elegiste el diseño ${CV.TEMPLATES[tc.dataset.startTpl].name}. Si querés, lo cambiás en el último paso.`);
     }
   });
 
