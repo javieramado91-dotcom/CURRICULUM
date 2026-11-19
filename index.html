@@ -113,7 +113,8 @@
     <button class="brand brand-btn" data-action="home" title="Volver al inicio"><span class="brand-mark"><svg class="i"><use href="#i-file"/></svg></span><span class="brand-txt">CV Builder</span></button>
     <nav class="stepper" id="stepper" aria-label="Pasos"></nav>
     <div class="ed-top-right">
-      <span class="mstep" id="mstep"></span>
+      <button type="button" class="mstep" id="mstep" aria-haspopup="true" aria-expanded="false" title="Ir a otro paso"><span id="mstep-txt"></span><svg class="i"><use href="#i-down"/></svg></button>
+      <div class="step-menu" id="step-menu" hidden></div>
       <button class="btn btn-primary btn-sm top-dl" data-action="download"><svg class="i"><use href="#i-download"/></svg><span>Descargar PDF</span></button>
     </div>
     <div class="mprog"><div class="mprog-fill" id="mprog-fill"></div></div>
@@ -122,6 +123,7 @@
   <div class="ed-body">
     <main class="form-pane">
       <div class="form-scroll" id="form-scroll">
+        <button type="button" class="return-bar" id="return-bar" hidden><svg class="i"><use href="#i-arrow-left"/></svg><span>Volver</span></button>
 
         <!-- ─────────── 1. DATOS PRINCIPALES ─────────── -->
         <section class="step" data-step="datos" data-title="Datos" data-icon="👤">

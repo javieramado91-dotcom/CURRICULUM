@@ -38,10 +38,22 @@ CV.Editor = (() => {
     const activeBtn = $$('.st-btn')[cur];
     if (activeBtn) activeBtn.scrollIntoView({ block: 'nearest', inline: 'center' });
     const s = steps[cur];
-    $('mstep').textContent = `${cur + 1}/${steps.length} · ${s.title}`;
+    $('mstep-txt').textContent = `${cur + 1}/${steps.length} · ${s.title}`;
+    $$('#step-menu [data-step-i]').forEach((b, i) => {
+      b.classList.toggle('active', i === cur);
+      b.classList.toggle('done', i < cur);
+    });
     $('mprog-fill').style.width = ((cur + 1) / steps.length * 100) + '%';
     $('step-count').textContent = `${cur + 1} / ${steps.length}`;
-    $('btn-back').disabled = cur === 0;
+    const ret = returnTo != null ? steps[returnTo] : null;
+    $('btn-back').disabled = cur === 0 && !ret;
+    $('btn-back').innerHTML = ret
+      ? `${icon('arrow-left')}<span>Volver a ${esc(ret.title)}</span>`
+      : `${icon('arrow-left')}<span>Anterior</span>`;
+    $('btn-back').classList.toggle('is-return', !!ret);
+    const bar = $('return-bar');
+    bar.hidden = !ret;
+    if (ret) bar.querySelector('span').textContent = `Volver a ${ret.title} (paso ${returnTo + 1})`;
     const next = $('btn-next');
     const last = cur === steps.length - 1;
     next.innerHTML = last
@@ -51,9 +63,31 @@ CV.Editor = (() => {
     $('editor').classList.toggle('on-design', s.id === 'diseno');
   }
 
+  /* Paso desde el que se saltó con un atajo (ej. "Cambiar diseño"), para poder volver directo */
+  let returnTo = null;
+
+  /** Salta a un paso desde un atajo recordando dónde estaba la persona */
+  function jumpTo(id) {
+    const i = steps.findIndex(s => s.id === id);
+    if (i < 0) return;
+    if (i === cur) return;
+    const origin = returnTo != null ? returnTo : cur;
+    goTo(i);
+    if (Math.abs(i - origin) > 1) { returnTo = origin; updateStepUI(); }
+  }
+
+  function goBackToOrigin() {
+    if (returnTo == null) return;
+    const r = returnTo;
+    returnTo = null;
+    goTo(r);
+  }
+
   function goTo(i, opts = {}) {
     if (typeof i === 'string') i = steps.findIndex(s => s.id === i);
     if (i < 0 || i >= steps.length) return;
+    returnTo = null;
+    closeStepMenu();
     const back = i < cur;
     steps.forEach((s, k) => { s.el.classList.toggle('active', k === i); s.el.classList.toggle('back', back && k === i); });
     cur = i;
@@ -90,7 +124,35 @@ CV.Editor = (() => {
     if (cur === steps.length - 1) { CV.Export.download(); return; }
     goTo(cur + 1);
   }
-  function back() { if (cur > 0) goTo(cur - 1); }
+  function back() {
+    if (returnTo != null) { goBackToOrigin(); return; }
+    if (cur > 0) goTo(cur - 1);
+  }
+
+  /* ── Menú de pasos (celular y tablet, donde no se ve la barra de pasos) ── */
+  function buildStepMenu() {
+    const menu = $('step-menu');
+    menu.innerHTML = steps.map((s, i) =>
+      `<button type="button" class="sm-item" data-step-i="${i}"><span class="st-num">${i + 1}</span><span>${esc(s.title)}</span></button>`
+    ).join('');
+    menu.addEventListener('click', e => {
+      const b = e.target.closest('[data-step-i]');
+      if (b) goTo(parseInt(b.dataset.stepI, 10));
+    });
+    $('mstep').addEventListener('click', e => {
+      e.stopPropagation();
+      const open = menu.hidden;
+      menu.hidden = !open;
+      $('mstep').setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', e => { if (!e.target.closest('#step-menu')) closeStepMenu(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeStepMenu(); });
+    $('return-bar').addEventListener('click', goBackToOrigin);
+  }
+  function closeStepMenu() {
+    const menu = $('step-menu');
+    if (menu && !menu.hidden) { menu.hidden = true; $('mstep').setAttribute('aria-expanded', 'false'); }
+  }
 
   /* ══════════════ CAMPOS SIMPLES ══════════════ */
   function bindFields() {
@@ -654,6 +716,7 @@ CV.Editor = (() => {
 
   function init() {
     buildStepper();
+    buildStepMenu();
     bindFields(); bindSegs(); bindRubros(); bindSuggestions(); bindTags(); bindLists(); bindDesign();
     $('btn-next').addEventListener('click', next);
     $('btn-back').addEventListener('click', back);
@@ -661,5 +724,5 @@ CV.Editor = (() => {
     goTo(0, { noFocus: true });
   }
 
-  return { init, goTo, next, back, renderAll, syncSegs, refreshDesign, currentStep: () => steps[cur] && steps[cur].id };
+  return { init, goTo, jumpTo, next, back, renderAll, syncSegs, refreshDesign, currentStep: () => steps[cur] && steps[cur].id };
 })();

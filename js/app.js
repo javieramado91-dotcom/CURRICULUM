@@ -78,7 +78,7 @@ window.CV = window.CV || {};
       e.preventDefault();
       openEditor();
       closePreview();
-      CV.Editor.goTo(g.dataset.goto);
+      CV.Editor.jumpTo(g.dataset.goto);
       return;
     }
     const q = e.target.closest('[data-quick]');
